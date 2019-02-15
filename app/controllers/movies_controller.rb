@@ -12,17 +12,36 @@ class MoviesController < ApplicationController
 
   def index
     @all_ratings = ['G','PG','PG-13','R']
-    @selected_ratings=[]
-    if params[:ratings]  #sort by ratings
+    @selected_ratings=['G','PG','PG-13','R']
+    @sort_by=''
+    @flag=0
+    if params[:ratings]  #determine ratings and sort
+      @flag=1
       @selected_ratings=params[:ratings].keys
-      @movies=Movie.with_ratings(@selected_ratings)
-    else 
-      @movies = Movie.order(params[:sort])
-      if params[:sort]=='title'
-        @css_title='hilite'
-      elsif params[:sort]=='release_date'
-        @css_release_date='hilite'
+      session[:ratings]=params[:ratings]
+    elsif session[:ratings]
+      @selected_ratings=session[:ratings].keys
+    end
+    if params[:sort]
+      @flag=1
+      @sort_by=params[:sort]
+      session[:sort]=params[:sort]
+    elsif session[:sort]
+      @sort_by=session[:sort]
+    end
+    if @sort_by=='title'
+      @css_title='hilite'
+    elsif @sort_by=='release_date'
+      @css_release_date='hilite'
+    end
+    if @flag==0 #no parameter passed
+      if session[:ratings]||session[:sort] #redirect
+        redirect_to movies_path(sort:session[:sort],ratings:session[:ratings])
+      else #no parameter in session
+        @movies=Movie.all
       end
+    else
+      @movies=Movie.with_ratings(@selected_ratings).order(@sort_by)
     end
   end
 
